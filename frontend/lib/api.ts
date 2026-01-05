@@ -316,3 +316,37 @@ export async function checkBackendHealth() {
     return false
   }
 }
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+export async function predictWeather(payload: {
+  humidity: number;
+  pressure: number;
+  wind_speed: number;
+  clouds: number;
+  month: number;
+  day: number;
+  city?: string;
+}) {
+  const res = await fetch(`${BASE_URL}/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Prediction failed");
+  return res.json();
+}
+
+export async function getAQI(city: string) {
+  const res = await fetch(`${BASE_URL}/air-quality?city=${city}`);
+  if (!res.ok) throw new Error("AQI fetch failed");
+  return res.json();
+}
+
+export async function get7DayForecast(city: string) {
+  const res = await fetch(
+    `${BASE_URL}/weather/forecast/7days?city=${city}`
+  );
+  if (!res.ok) throw new Error("Forecast fetch failed");
+  return res.json();
+}

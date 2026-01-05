@@ -601,3 +601,115 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
+# ============================================================================
+# AQI CALCULATION (NEW FEATURE)
+# ============================================================================
+
+def calculate_aqi(pm25: float, pm10: float) -> dict:
+    """
+    Simple AQI calculation based on PM2.5 (primary) and PM10.
+    """
+    if pm25 is not None:
+        if pm25 <= 12:
+            return {"aqi": pm25, "category": "Good"}
+        elif pm25 <= 35.4:
+            return {"aqi": pm25, "category": "Moderate"}
+        elif pm25 <= 55.4:
+            return {"aqi": pm25, "category": "Unhealthy for Sensitive Groups"}
+        elif pm25 <= 150.4:
+            return {"aqi": pm25, "category": "Unhealthy"}
+        else:
+            return {"aqi": pm25, "category": "Very Unhealthy"}
+
+    if pm10 is not None:
+        return {"aqi": pm10, "category": "Moderate"}
+
+    return {"aqi": None, "category": "Unknown"}
+
+
+@app.get("/air-quality", tags=["Air Quality"])
+def get_city_aqi(city: str):
+    """
+    Get Air Quality Index (AQI) for any city using OpenAQ API.
+    """
+    try:
+        # Encode city for URL
+        encoded_city = urllib.parse.quote(city)
+
+        # Fetch latest data from OpenAQ
+        openaq_url = f"https://api.openaq.org/v2/latest?city={encoded_city}&limit=1"
+        with urllib.request.urlopen(openaq_url, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        if not data.get("results"):
+            raise HTTPException(status_code=404, detail="No AQI data found")
+
+        measurements = data["results"][0].get("measurements", [])
+
+        pm25 = next((m["value"] for m in measurements if m["parameter"] == "pm25"), None)
+        pm10 = next((m["value"] for m in measurements if m["parameter"] == "pm10"), None)
+
+        aqi_data = calculate_aqi(pm25, pm10)
+
+        return {
+            "city": city,
+            "pm25": pm25,
+            "pm10": pm10,
+            "aqi": aqi_data["aqi"],
+            "category": aqi_data["category"]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"AQI lookup failed: {str(e)}")
+
+# ============================================================================
+# 7-DAY WEATHER FORECAST (FOR CHARTS)
+# ============================================================================
+
+@app.get("/weather/forecast/7days", tags=["Weather Forecast"])
+def get_7_day_forecast(city: str):
+    """
+    Retrieve 7-day forecast including max/min temps and rain probability for charts.
+    """
+    try:
+        # Geocode the city
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1"
+        with urllib.request.urlopen(geo_url, timeout=10) as resp:
+            geo_data = json.loads(resp.read().decode("utf-8"))
+
+        results = geo_data.get("results")
+        if not results:
+            raise HTTPException(status_code=404, detail="City not found")
+
+        lat = float(results[0]["latitude"])
+        lon = float(results[0]["longitude"])
+
+        # Request daily forecast for 7 days
+        forecast_url = (
+            f"https://api.open-meteo.com/v1/forecast?"
+            f"latitude={lat}&longitude={lon}"
+            f"&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+            f"&timezone=auto"
+        )
+
+        with urllib.request.urlopen(forecast_url, timeout=10) as resp:
+            forecast = json.loads(resp.read().decode("utf-8"))
+
+        daily = forecast.get("daily", {})
+
+        forecast_list = []
+        for i in range(min(len(daily.get("time", [])), 7)):
+            forecast_list.append({
+                "date": daily["time"][i],
+                "temp_max": daily["temperature_2m_max"][i],
+                "temp_min": daily["temperature_2m_min"][i],
+                "rain_probability": daily["precipitation_probability_max"][i]
+            })
+
+        return {
+            "city": city,
+            "forecast": forecast_list
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Forecast lookup failed: {str(e)}")

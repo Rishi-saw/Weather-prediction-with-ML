@@ -14,31 +14,45 @@ import { DashboardSkeleton } from "@/components/loading-skeleton"
 import { ErrorModal } from "@/components/error-modal"
 import { Footer } from "@/components/footer"
 import { AnimatedBackground } from "@/components/animated-background"
+import { getAQI, get7DayForecast } from "@/lib/api"
+import ForecastChart from "@/components/ForecastChart"
+import AQICard from "@/components/AQICard"
+
 
 export default function DashboardPage() {
   const params = useParams()
   const city = decodeURIComponent(params.city as string)
 
+  const [mounted, setMounted] = useState(false)
   const [weather, setWeather] = useState<WeatherPrediction | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showError, setShowError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [aqi, setAqi] = useState<any>(null)
+  const [forecast, setForecast] = useState<any[]>([])
+
 
   const loadWeather = useCallback(async () => {
     setIsLoading(true)
     setShowError(false)
 
     try {
-      const response = await fetchWeatherPrediction(city)
+      const [weatherRes, aqiRes, forecastRes] = await Promise.all([
+        fetchWeatherPrediction(city),
+        getAQI(city),
+        get7DayForecast(city),
+      ])
 
-      if (response.success && response.data) {
-        setWeather(response.data)
+      if (weatherRes.success && weatherRes.data) {
+        setWeather(weatherRes.data)
+        setAqi(aqiRes)
+        setForecast(forecastRes.forecast)
         toast.success(`Weather loaded for ${city}`)
       } else {
-        throw new Error(response.error || "Failed to fetch weather data")
+        throw new Error(weatherRes.error || "Failed to fetch weather data")
       }
     } catch (error) {
-      console.error("Failed to fetch weather:", error)
+      console.error("Failed to fetch dashboard data:", error)
       setErrorMessage(error instanceof Error ? error.message : "An unexpected error occurred")
       setShowError(true)
     } finally {
@@ -46,9 +60,15 @@ export default function DashboardPage() {
     }
   }, [city])
 
+
   useEffect(() => {
     loadWeather()
   }, [loadWeather])
+  useEffect(() => {
+  setMounted(true)
+}, [])
+
+  if (!mounted) return null
 
   return (
     <div className="min-h-screen pb-20">
@@ -77,6 +97,33 @@ export default function DashboardPage() {
             >
               {/* Main weather cards grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* AQI + Forecast Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* AQI Card */}
+                  {aqi && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="lg:col-span-1"
+                    >
+                      <AQICard data={aqi} />
+                    </motion.div>
+                  )}
+
+                  {/* 7-Day Forecast Chart */}
+                  {forecast.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="lg:col-span-2"
+                    >
+                      <ForecastChart data={forecast} />
+                    </motion.div>
+                  )}
+                </div>
+
                 {/* Main condition card - spans 2 columns on large screens */}
                 <WeatherConditionCard
                   condition={weather.condition}
