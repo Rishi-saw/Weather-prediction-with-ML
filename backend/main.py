@@ -627,40 +627,82 @@ def calculate_aqi(pm25: float, pm10: float) -> dict:
     return {"aqi": None, "category": "Unknown"}
 
 
+# ============================================================================
+# AIR QUALITY INDEX (OPEN-METEO – STABLE)
+# ============================================================================
+
 @app.get("/air-quality", tags=["Air Quality"])
 def get_city_aqi(city: str):
     """
-    Get Air Quality Index (AQI) for any city using OpenAQ API.
+    Get AQI using Open-Meteo Air Quality API (reliable for India)
     """
     try:
-        # Encode city for URL
-        encoded_city = urllib.parse.quote(city)
+        if not city or not city.strip():
+            raise HTTPException(status_code=400, detail="City is required")
 
-        # Fetch latest data from OpenAQ
-        openaq_url = f"https://api.openaq.org/v2/latest?city={encoded_city}&limit=1"
-        with urllib.request.urlopen(openaq_url, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        # 1. Geocode city
+        geo_url = (
+            f"https://geocoding-api.open-meteo.com/v1/search?"
+            f"name={urllib.parse.quote(city)}&count=1"
+        )
 
-        if not data.get("results"):
-            raise HTTPException(status_code=404, detail="No AQI data found")
+        with urllib.request.urlopen(geo_url, timeout=10) as resp:
+            geo_data = json.loads(resp.read().decode("utf-8"))
 
-        measurements = data["results"][0].get("measurements", [])
+        if not geo_data.get("results"):
+            raise HTTPException(status_code=404, detail="City not found")
 
-        pm25 = next((m["value"] for m in measurements if m["parameter"] == "pm25"), None)
-        pm10 = next((m["value"] for m in measurements if m["parameter"] == "pm10"), None)
+        lat = geo_data["results"][0]["latitude"]
+        lon = geo_data["results"][0]["longitude"]
 
-        aqi_data = calculate_aqi(pm25, pm10)
+        # 2. Air quality request
+        aqi_url = (
+            f"https://air-quality-api.open-meteo.com/v1/air-quality?"
+            f"latitude={lat}&longitude={lon}"
+            f"&hourly=us_aqi,pm2_5,pm10"
+            f"&timezone=auto"
+        )
+
+        with urllib.request.urlopen(aqi_url, timeout=10) as resp:
+            aqi_data = json.loads(resp.read().decode("utf-8"))
+
+        hourly = aqi_data.get("hourly", {})
+        if not hourly or "us_aqi" not in hourly:
+            raise HTTPException(status_code=404, detail="AQI data not available")
+
+        # Latest AQI value
+        aqi_value = hourly["us_aqi"][-1]
+        pm25 = hourly.get("pm2_5", [None])[-1]
+        pm10 = hourly.get("pm10", [None])[-1]
+
+        # AQI category
+        if aqi_value <= 50:
+            category = "Good"
+        elif aqi_value <= 100:
+            category = "Moderate"
+        elif aqi_value <= 150:
+            category = "Unhealthy for Sensitive Groups"
+        elif aqi_value <= 200:
+            category = "Unhealthy"
+        elif aqi_value <= 300:
+            category = "Very Unhealthy"
+        else:
+            category = "Hazardous"
 
         return {
             "city": city,
+            "aqi": aqi_value,
+            "category": category,
             "pm25": pm25,
             "pm10": pm10,
-            "aqi": aqi_data["aqi"],
-            "category": aqi_data["category"]
+            "source": "open-meteo"
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"AQI lookup failed: {str(e)}")
+
 
 # ============================================================================
 # 7-DAY WEATHER FORECAST (FOR CHARTS)

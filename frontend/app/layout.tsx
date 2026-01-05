@@ -25,18 +25,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased`} suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
-          {children}
-          <Toaster position="top-right" richColors />
-        </ThemeProvider>
-        <Analytics />
+      <body suppressHydrationWarning className="font-sans antialiased">
+        {children}
       </body>
     </html>
   )
 }
+

@@ -336,12 +336,19 @@ export async function predictWeather(payload: {
   if (!res.ok) throw new Error("Prediction failed");
   return res.json();
 }
-
 export async function getAQI(city: string) {
-  const res = await fetch(`${BASE_URL}/air-quality?city=${city}`);
-  if (!res.ok) throw new Error("AQI fetch failed");
-  return res.json();
+  try {
+    const res = await fetch(
+      `${BASE_URL}/air-quality?city=${encodeURIComponent(city)}`
+    )
+
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
+
 
 export async function get7DayForecast(city: string) {
   const res = await fetch(

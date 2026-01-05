@@ -15,7 +15,7 @@ import { ErrorModal } from "@/components/error-modal"
 import { Footer } from "@/components/footer"
 import { AnimatedBackground } from "@/components/animated-background"
 import { getAQI, get7DayForecast } from "@/lib/api"
-import ForecastChart from "@/components/ForecastChart"
+import { WeeklyForecast } from "@/components/weekly-forecast"
 import AQICard from "@/components/AQICard"
 
 
@@ -37,23 +37,29 @@ export default function DashboardPage() {
     setShowError(false)
 
     try {
-      const [weatherRes, aqiRes, forecastRes] = await Promise.all([
-        fetchWeatherPrediction(city),
-        getAQI(city),
-        get7DayForecast(city),
+
+      const weatherRes = await fetchWeatherPrediction(city)
+      const aqiPromise = getAQI(city).catch(() => null)
+      const forecastPromise = get7DayForecast(city).catch(() => null)
+
+      const [aqiRes, forecastRes] = await Promise.all([
+        aqiPromise,
+        forecastPromise,
       ])
 
       if (weatherRes.success && weatherRes.data) {
         setWeather(weatherRes.data)
         setAqi(aqiRes)
-        setForecast(forecastRes.forecast)
+        setForecast(forecastRes?.forecast || [])
         toast.success(`Weather loaded for ${city}`)
       } else {
         throw new Error(weatherRes.error || "Failed to fetch weather data")
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
-      setErrorMessage(error instanceof Error ? error.message : "An unexpected error occurred")
+      setErrorMessage(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      )
       setShowError(true)
     } finally {
       setIsLoading(false)
@@ -61,12 +67,13 @@ export default function DashboardPage() {
   }, [city])
 
 
+
   useEffect(() => {
     loadWeather()
   }, [loadWeather])
   useEffect(() => {
-  setMounted(true)
-}, [])
+    setMounted(true)
+  }, [])
 
   if (!mounted) return null
 
@@ -97,32 +104,6 @@ export default function DashboardPage() {
             >
               {/* Main weather cards grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* AQI + Forecast Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* AQI Card */}
-                  {aqi && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="lg:col-span-1"
-                    >
-                      <AQICard data={aqi} />
-                    </motion.div>
-                  )}
-
-                  {/* 7-Day Forecast Chart */}
-                  {forecast.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="lg:col-span-2"
-                    >
-                      <ForecastChart data={forecast} />
-                    </motion.div>
-                  )}
-                </div>
 
                 {/* Main condition card - spans 2 columns on large screens */}
                 <WeatherConditionCard
@@ -189,6 +170,38 @@ export default function DashboardPage() {
                         : "Light wind"}
                   </span>
                 </WeatherCard>
+                {/* AQI + Forecast Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* AQI Card */}
+                  {aqi && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="lg:col-span-1"
+                    >
+                      <AQICard data={aqi} />
+                    </motion.div>
+                  )}
+
+                  {/* 7-Day Forecast Chart */}
+                  {/* {forecast.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <WeeklyForecast data={forecast} />
+                    </motion.div>
+                  )} */}
+
+                </div>
+                <div className="mt-8">
+                  {forecast.length > 0 && (
+                    <WeeklyForecast data={forecast} />
+                  )}
+                </div>
+
               </div>
 
             </motion.div>
