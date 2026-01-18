@@ -1,5 +1,6 @@
 "use client"
 
+import { WeatherBackground } from "@/components/weather-background"
 import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -13,10 +14,8 @@ import { WeatherConditionCard } from "@/components/weather-condition-card"
 import { DashboardSkeleton } from "@/components/loading-skeleton"
 import { ErrorModal } from "@/components/error-modal"
 import { Footer } from "@/components/footer"
-import { AnimatedBackground } from "@/components/animated-background"
 import { getAQI, get7DayForecast } from "@/lib/api"
 import { WeeklyForecast } from "@/components/weekly-forecast"
-import AQICard from "@/components/AQICard"
 
 
 export default function DashboardPage() {
@@ -78,8 +77,13 @@ export default function DashboardPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen pb-20">
-      <AnimatedBackground condition={weather?.condition} temperature={weather?.temperature} />
+    <div className="min-h-screen pb-20 relative overflow-hidden">
+      <WeatherBackground
+  condition={weather?.condition}
+  temperature={weather?.temperature}
+  rainfall={weather?.rainfall}
+/>
+
 
       <DashboardHeader
         city={city}
@@ -170,40 +174,43 @@ export default function DashboardPage() {
                         : "Light wind"}
                   </span>
                 </WeatherCard>
-                {/* AQI + Forecast Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* AQI Card */}
-                  {aqi && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="lg:col-span-1"
-                    >
-                      <AQICard data={aqi} />
-                    </motion.div>
-                  )}
+                {/* Air Quality Index card */}
+                {aqi && (
+                  <WeatherCard
+                    title="Air Quality"
+                    value={aqi.aqi}
+                    unit=""
+                    icon={Wind}
+                    iconColor={
+                      aqi.category.includes("Good")
+                        ? "text-green-600"
+                        : aqi.category.includes("Moderate")
+                          ? "text-yellow-600"
+                          : "text-red-600"
+                    }
+                    gradient={
+                      aqi.category.includes("Good")
+                        ? "from-green-400/20 to-emerald-400/20"
+                        : aqi.category.includes("Moderate")
+                          ? "from-yellow-400/20 to-orange-400/20"
+                          : "from-red-400/20 to-rose-400/20"
+                    }
+                    delay={0.35}
+                  >
+                    <span className="text-sm font-medium">
+                      {aqi.category}
+                    </span>
+                  </WeatherCard>
+                )}
 
-                  {/* 7-Day Forecast Chart */}
-                  {/* {forecast.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <WeeklyForecast data={forecast} />
-                    </motion.div>
-                  )} */}
 
-                </div>
-                <div className="mt-8">
-                  {forecast.length > 0 && (
-                    <WeeklyForecast data={forecast} />
-                  )}
-                </div>
 
               </div>
-
+              <div className="mt-8">
+                {forecast.length > 0 && (
+                  <WeeklyForecast data={forecast} />
+                )}
+              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>

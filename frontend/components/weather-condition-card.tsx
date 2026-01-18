@@ -45,8 +45,22 @@ const conditionConfig = {
   },
 }
 
+function normalizeCondition(condition: string) {
+  const text = condition.toLowerCase()
+
+  if (text.includes("rain")) return "Rainy"
+  if (text.includes("storm") || text.includes("thunder")) return "Stormy"
+  if (text.includes("cloud")) return "Cloudy"
+  if (text.includes("sun") || text.includes("clear")) return "Sunny"
+
+  return "Sunny"
+}
+
+
 export function WeatherConditionCard({ condition, temperature, city, delay = 0 }: WeatherConditionCardProps) {
-  const config = conditionConfig[condition] || conditionConfig["Sunny"]
+  const normalized = normalizeCondition(condition)
+const config = conditionConfig[normalized]
+
   const Icon = config.icon
 
   return (

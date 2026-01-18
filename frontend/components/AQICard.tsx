@@ -1,16 +1,32 @@
-export default function AQICard({ data }: { data: any }) {
-  const color =
-    data.category === "Good"
-      ? "bg-green-500"
-      : data.category.includes("Unhealthy")
-      ? "bg-red-500"
-      : "bg-yellow-500";
+import { Wind } from "lucide-react"
+
+export function AQICard({ data }: { data: any }) {
+  const aqi = data?.aqi ?? "N/A"
+  const category = data?.category ?? "Unknown"
+
+  let color = "bg-green-100 text-green-700"
+  if (category.includes("Moderate")) color = "bg-yellow-100 text-yellow-700"
+  if (category.includes("Unhealthy")) color = "bg-red-100 text-red-700"
 
   return (
-    <div className={`p-5 rounded-xl text-white ${color}`}>
-      <h2 className="text-xl font-semibold">Air Quality Index</h2>
-      <p className="text-4xl font-bold">{data.aqi ?? "N/A"}</p>
-      <p className="mt-2">{data.category}</p>
+    <div className="rounded-2xl p-6 bg-white/80 backdrop-blur shadow-sm h-full flex flex-col justify-between">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2 rounded-full bg-muted">
+          <Wind className="w-5 h-5 text-muted-foreground" />
+        </div>
+        <h3 className="font-medium">Air Quality</h3>
+      </div>
+
+      <div>
+        <div className="text-3xl font-bold">{aqi}</div>
+
+        <div
+          className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${color}`}
+        >
+          {category}
+        </div>
+      </div>
+
     </div>
-  );
+  )
 }

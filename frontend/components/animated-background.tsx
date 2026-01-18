@@ -5,7 +5,19 @@ import { motion } from "framer-motion"
 import { Cloud, Sun, CloudRain, Wind, Snowflake, CloudLightning, CloudFog } from "lucide-react"
 import type { WeatherCondition } from "@/lib/types"
 
-const weatherThemes = {
+interface Theme {
+  gradient: string
+  darkGradient: string
+  orb1: string
+  orb2: string
+  orb3: string
+  darkOrb1: string
+  darkOrb2: string
+  icons: any[]
+  iconOpacity: string
+}
+
+const weatherThemes: Record<string, Theme> = {
   Sunny: {
     gradient: "from-amber-200/70 via-orange-100/50 to-yellow-100/60",
     darkGradient: "from-amber-500/15 via-orange-400/10 to-yellow-500/10",

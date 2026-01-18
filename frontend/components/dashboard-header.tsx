@@ -23,7 +23,7 @@ export function DashboardHeader({ city, lastUpdated, onRefresh, isLoading }: Das
       className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
     >
       <div className="container mx-auto px-4 py-4">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-4">
           {/* Logo and back button */}
           <div className="flex items-center gap-4">
             <Link href="/">

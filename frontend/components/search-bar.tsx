@@ -72,8 +72,10 @@ export function SearchBar({ className, size = "default", autoFocus = false }: Se
           <Search className={cn("text-muted-foreground", isLarge ? "w-6 h-6" : "w-5 h-5")} />
         )}
         <input
-          ref={inputRef}
           type="text"
+          id="search-input"
+          name="search"
+          ref={inputRef}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)

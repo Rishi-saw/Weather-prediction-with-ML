@@ -48,7 +48,7 @@ export default function HomePage() {
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-md text-pretty">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-md text-pretty">
             ML-powered weather predictions for Indian cities. Get accurate forecasts instantly.
           </p>
         </motion.div>

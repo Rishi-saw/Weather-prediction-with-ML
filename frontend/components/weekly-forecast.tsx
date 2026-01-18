@@ -27,8 +27,8 @@ function getWeatherIcon(rain: number) {
 
 export function WeeklyForecast({ data }: { data: DayForecast[] }) {
   return (
-    <div className="w-full bg-neutral-900 text-white rounded-2xl px-6 py-4">
-      <div className="flex justify-between items-center gap-6">
+    <div className="w-full rounded-2xl text-white px-8 py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6">
         {data.map((day, index) => {
           const Icon = getWeatherIcon(day.rain_probability)
 
@@ -38,18 +38,14 @@ export function WeeklyForecast({ data }: { data: DayForecast[] }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="flex flex-col items-center w-full"
+              className="flex flex-col items-center w-full bg-white border border-gray-200 shadow-lg p-4 rounded-lg"
             >
-              <span className="text-sm text-gray-300">
+              <span className="text-base text-black">
                 {getDayName(day.date)}
               </span>
 
               <Icon className="w-7 h-7 my-2 text-yellow-400" />
-
-              <span className="text-sm font-semibold">
-                {Math.round(day.temp_max)}°
-              </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-800">
                 {Math.round(day.temp_min)}°
               </span>
             </motion.div>
