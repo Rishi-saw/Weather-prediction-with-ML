@@ -1,10 +1,3 @@
-Below is a **single, unified, professional README** that **merges frontend + backend perfectly** and matches the **final state of your project**.
-This is **submission-ready**, **viva-safe**, and **portfolio-quality**.
-
-👉 You can **replace your entire `README.md` with this**.
-
----
-
 # 🌦️ WeatherAI – ML Powered Weather Prediction System
 
 **WeatherAI** is a full-stack **machine learning–based weather prediction web application** that forecasts **temperature, rain probability, air quality index (AQI), and 7-day weather trends** for Indian cities.
