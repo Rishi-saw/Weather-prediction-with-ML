@@ -8,6 +8,7 @@ Team Members -
 1. Soumyajit Bera
 2. Snhivansh Thakur
 3. Nitin Kumar
+   
 All team members Contributed Equally.
 ---
 
