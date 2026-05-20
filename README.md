@@ -4,6 +4,12 @@
 The system integrates **trained ML models**, **real-time weather APIs**, and a **modern interactive frontend**.
 
 ---
+Team Members -
+1. Soumyajit Bera
+2. Snhivansh Thakur
+3. Nitin Kumar
+All team members Contributed Equally.
+---
 
 ## ✨ Key Features
 
